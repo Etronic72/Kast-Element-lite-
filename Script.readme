@@ -1,0 +1,251 @@
+# MainScript.cs
+
+## Description
+
+This script manages the core game logic, including the player's balance, UI, panel switching, button click handling (purchasing resources and objects, selling everything), and data saving.
+
+## Variables
+
+*   `balance`: (public int) The player's current balance.
+*   `balanceText`: (public TextMeshProUGUI) The text field to display the player's balance in the UI.
+*   `ObjectPanel`: (public GameObject) The panel containing objects.
+*   `ResourcesPanel`: (public GameObject) The panel containing resources.
+*   `InventoryPanel`: (public GameObject) The panel containing the inventory.
+*   `OPtionPanel`: (public GameObject) The panel with options.
+*   `ObjectButton`: (public Button) The button to open the object panel.
+*   `ResourcesButton`: (public Button) The button to open the resource panel.
+*   `InventoryButton`: (public Button) The button to open the inventory panel.
+*   `OPtionButton`: (public Button) The button to open the option panel.
+*   `AllSell`: (public Button) The button to sell everything.
+*   `AllSellText`: (public TextMeshProUGUI) The text field to display the total sale amount.
+*   `CountElement`: (public int) An element counter.
+*   `CountElement_text`: (public Text) Text to display the element counter.
+*   `bal`: (private Save2) An object for saving balance data.
+*   `NotEnoughMoneyColor`: (public Color) The text color when the player doesn't have enough money.
+*   `EnoughMoneyColor`: (public Color) The text color when the player has enough money.
+*   `allDateScript`: (private AllDate) A reference to the AllDate script to access game data.
+
+## Methods
+
+*   `Awake()`: (private void) Called when the object is loaded. Empty in this code.
+*   `Start()`: (void) Called when the script starts.
+    *   Loads balance data from PlayerPrefs if it exists.
+    *   Adds event handlers to buttons for switching panels.
+    *   Finds the `AllDate` script in the scene.
+*   `Update()`: (void) Called every frame.
+    *   Updates the balance text in the UI.
+    *   Updates the total sell amount text in the UI.
+    *   Calls `OnApplicationQuit()` to save data (better to use `OnApplicationQuit` for reliability).
+*   `UpdateResourceUI()`: (private void) Method to update the UI for resources.
+    *   Iterates through all resources in `allDateScript.itemdata_res`.
+    *   Updates the name and level text of the resource.
+    *   Updates the text on the purchase button based on the player's money.
+    *   Changes the button color based on the player's money.
+*   `UpdateObjectUI()`: (private void) Method to update the UI for objects.
+    *   Iterates through all objects in `allDateScript.itemdata_obj`.
+    *   Updates the name and level text of the object.
+    *   Updates the text on the purchase button based on the player's money.
+    *   Changes the button color based on the player's money.
+*   `SetButtonColor(Button button, Color color)`: (private void) Method to change the color of a button.
+    *   Takes a button and a color.
+    *   Changes the button color.
+*   `TogglePanel(GameObject panel)`: (void) Method to toggle the visibility of panels.
+    *   Takes the panel to display.
+    *   Hides all panels and displays the given panel.
+*   `HandleResourceButtonClick(res resourceItem)`: (public void) Handler for clicking a resource button.
+    *   Takes a `res resourceItem` object.
+    *   Updates the resource UI.
+    *   Checks if the player has enough money to buy the resource.
+    *   If there is enough money:
+        *   Increases the resource level.
+        *   Sets the `isBuy` flag to 1.
+        *   Deducts money from the balance.
+        *   Increases the resource price.
+        *   Updates the text on the purchase button.
+        *   Increases `CountElement` if the resource level is 1.
+    *   If there isn't enough money, prints a message to the console.
+    *   Updates the resource UI.
+*   `HandleObjectButtonClick(obj objectItem)`: (public void) Handler for clicking an object button.
+    *   Takes an `obj objectItem` object.
+    *   Checks if the player has enough money to buy the object.
+    *   If there is enough money:
+        *   Checks if there are enough resources to craft the object, if the object has a crafting recipe.
+        *   If there are enough resources (or no crafting is required):
+            *   Sets the `isBuy` flag to 1.
+            *   Increases the object level.
+            *   Deducts money from the balance.
+            *   Increases the object price.
+            *   Updates the text on the purchase button.
+            *   Increases `CountElement` if the object level is 1.
+            *   Calls `allDateScript.CraftObject(objectItem)` to perform the crafting, if required.
+    *   If there are not enough resources, prints a message to the console.
+    *   If there isn't enough money, prints a message to the console.
+    *   Updates the object UI.
+*   `SellAll()`: (public void) Method to sell all resources and objects.
+    *   Increases the player's balance by the total sale value of all resources and objects.
+    *   Resets the sell values in `allDateScript`.
+    *   Updates the `AllSellText` text.
+    *   Resets the count of all resources, objects, and inventory items.
+*   `OnApplicationQuit()`: (private void) Method called when exiting the application.
+    *   Saves the current balance to `bal.balance_save`.
+    *   Saves the `bal` object to PlayerPrefs as JSON.
+
+## Classes
+
+*   `Save2`: (public class) Class to save player balance data.
+    *   `balance_save`: (public int) Saved balance.
+
+
+
+
+
+
+# AllDate.cs
+
+## Description
+
+This class manages all game data, including inventory, resources, and objects. It loads data from JSON, handles UI updates, and manages crafting.
+
+## Variables
+
+*   `OnButtonClicked`: (public delegate void ButtonClickedHandler(Item itemData); public event ButtonClickedHandler) Event triggered when an item button is clicked.
+*   `jsonFilePath`: (public string) Path to the JSON file containing item data.
+*   `itemPrefab`: (public GameObject) Prefab for displaying inventory items.
+*   `parentTransform_item`: (public Transform) Parent transform for inventory items.
+*   `itemPrefab2`: (public GameObject) Prefab for displaying resources.
+*   `parentTransform_resources`: (public Transform) Parent transform for resources.
+*   `itemPrefab3`: (public GameObject) Prefab for displaying objects.
+*   `parentTransform_object`: (public Transform) Parent transform for objects.
+*   `itemdata`: (public List<Item>) List to store general item data loaded from JSON.
+*   `itemdata_inv`: (public List<inv>) List for inventory items.
+*   `itemdata_res`: (public List<res>) List for resources.
+*   `itemdata_obj`: (public List<obj>) List for objects.
+*   `sv`: (private Save) Object for saving game data.
+*   `mainScript`: (private MainScript) Reference to the MainScript for balance interactions.
+*   `totalSellValue`: (public int) Total value from selling all resources and objects.
+*   `resValue`: (public int) Value from selling resources.
+*   `objValue`: (public int) Value from selling objects.
+*   `Creat`: (public bool) Flag indicating if crafting is possible (unused).
+*   `open`: (public int) Flag indicating if save data should be loaded (1=yes, 0=no).
+
+## Methods
+
+*   `Start()`: (void) Called when the script starts.
+    *   Loads data from PlayerPrefs if available.
+    *   Loads JSON data for inventory, resources, and objects.
+    *   Instantiates UI elements based on loaded data.
+    *   Links TextMeshProUGUI "Count" elements to inventory items.
+    *   Starts coroutines for data saving and automatic resource/object generation.
+    *   Sets the "Buy" text on the purchase buttons.
+*   `Update()`: (void) Called every frame.
+    *   Updates `totalSellValue` based on `resValue` and `objValue`.
+*   `SaveData()`: (public IEnumerator) Coroutine that saves data periodically.
+    *   Calls `OnApplicationQuit()` every 1 second.
+*   `JSonLoadInventory(GameObject prefab, Transform parent)`: (public void) Loads inventory data from JSON.
+    *   Constructs the full file path.
+    *   Reads the JSON data from the file.
+    *   Deserializes JSON into `ItemsList`.
+    *   Creates UI elements for each item.
+*   `JSonLoadResources(GameObject prefab, Transform parent)`: (public void) Loads resource data from JSON.
+    *   Constructs the full file path.
+    *   Reads the JSON data from the file.
+    *   Deserializes JSON into `ItemsList`.
+    *   Creates UI elements for each resource.
+    *   Sets the sprite for each resource's image.
+    *   Adds a listener to the resource's button.
+*   `OnResourceButtonClicked(res resourceItem)`: (private void) Handles resource button clicks.
+    *   Finds the `MainScript` and calls its `HandleResourceButtonClick()` method.
+*   `UpdateResourceCountOverTime(res resourceItem)`: (private IEnumerator) Coroutine that automatically updates the resource count.
+    *   Increments resource count if `isBuy` is 1 and the time interval has passed.
+    *   Updates the fill amount for the background.
+*   `JSonLoadObject(GameObject prefab, Transform parent)`: (public void) Loads object data from JSON.
+    *   Constructs the full file path.
+    *   Reads the JSON data from the file.
+    *   Deserializes JSON into `ItemsList`.
+    *   Creates UI elements for each object.
+    *   Sets the sprite for each object's image.
+    *   Adds a listener to the object's button.
+*   `OnObjectButtonClicked(obj objectItem)`: (private void) Handles object button clicks.
+    *   Finds the `MainScript` and calls its `HandleObjectButtonClick()` method.
+*   `UpdateObjectCountOverTime(obj objectItem)`: (private IEnumerator) Coroutine that automatically updates the object count.
+    *   Increments object count if `isBuy` is 1 and the time interval has passed.
+    *   Calls `CraftObject()` to perform the object's crafting.
+    *   Updates the fill amount for the background.
+*   `CheckCraftRequirements(obj objectItem)`: (public bool) Checks if there are enough resources to craft an object.
+    *   Iterates through the `craft` List, checking if the player has enough items for each resource.
+    *   Returns `true` if enough resources are available, `false` otherwise.
+*   `CraftObject(obj objectItem)`: (public void) Performs the crafting operation.
+    *   Subtracts the required resources from the player's inventory.
+    *   Adjusts the `resValue`.
+    *   Logs a message to the console.
+*   `OnApplicationQuit()`: (private void) Saves the game data using PlayerPrefs.
+    *   Saves data for levels, counts, prices, and buy flags.
+    *   Creates arrays to hold the data.
+    *   Populates the arrays.
+    *   Sets the JSON string in PlayerPrefs.
+
+## Classes
+
+*   `Item`: (public class) Represents a general item in the game.
+    *   `id`: (public int) Unique identifier.
+    *   `name`: (public string) Item name.
+    *   `lvl`: (public int) Item level.
+    *   `time`: (public int) Generation time.
+    *   `price`: (public int) Item price.
+    *   `sell`: (public int) Item selling price.
+    *   `count`: (public int) Item count.
+    *   `isBuy`: (public int) Buy flag.
+    *   `craft`: (public List<CraftItem>) List of `CraftItem` needed for crafting.
+    *   `image`: (public Image) Reference to an Image component (populated from `images`).
+    *   `images`: (public string) Path to the image.
+    *   `Background`: (public Image) Background Image component for fill amount.
+    *   `button`: (public Button) Reference to the button.
+*   `ItemsList`: (public class) A list of items.
+    *   `items`: (public List<Item>) List of `Item`.
+*   `inv`: (public class) Represents an inventory item.
+    *   `name`: (public string) Item name.
+    *   `count`: (public int) Item count.
+    *   `countText`: (public TextMeshProUGUI) Text field for displaying count.
+*   `res`: (public class) Represents a resource.
+    *   `id`: (public int) Unique identifier.
+    *   `name`: (public string) Name.
+    *   `lvl`: (public int) Level.
+    *   `time`: (public int) Generation time.
+    *   `sell`: (public int) Sell value.
+    *   `price`: (public int) Price.
+    *   `count`: (public int) Count.
+    *   `up`: (public Button) Button (unused).
+    *   `isBuy`: (public int) Buy flag.
+    *   `nameText`: (public TextMeshProUGUI) Reference to name text field.
+    *   `descriptionText`: (public TextMeshProUGUI) Reference to description text field.
+    *   `sellText`: (public TextMeshProUGUI) Reference to sell text field.
+    *   `image`: (public Image) Reference to Image component.
+    *   `images`: (public string) Image Path.
+    *   `Background`: (public Image) Background Image component.
+    *   `button`: (public Button) Reference to Button component.
+*   `obj`: (public class) Represents an object.
+    *   `id`: (public int) Unique identifier.
+    *   `name`: (public string) Name.
+    *   `lvl`: (public int) Level.
+    *   `time`: (public int) Generation time.
+    *   `sell`: (public int) Sell value.
+    *   `price`: (public int) Price.
+    *   `isBuy`: (public int) Buy flag.
+    *   `count`: (public int) Count.
+    *   `craft`: (public List<CraftItem>) List of crafting ingredients.
+    *   `nameText`: (public TextMeshProUGUI) Reference to name text field.
+    *   `descriptionText`: (public TextMeshProUGUI) Reference to description text field.
+    *   `sellText`: (public TextMeshProUGUI) Reference to sell text field.
+    *   `image`: (public Image) Reference to Image component.
+    *   `images`: (public string) Image Path.
+    *   `Background`: (public Image) Background Image component.
+    *   `button`: (public Button) Reference to Button component.
+*   `CraftItem`: (public class) Represents an item required for crafting.
+    *   `name`: (public string) Item name.
+    *   `count`: (public int) Required item count.
+*   `Save`: (public class) Class for saving the game state.
+    *   `open_save`: (public int) Flag for loading saves.
+    *   `lvl_save`: (public int[]) Array for item levels.
+    *   `count_save`: (public int[]) Array for item counts.
+    *   `isBuy_save`: (public int[]) Array for item buy flags.
+    *   `price_save`: (public int[]) Array for item prices.
